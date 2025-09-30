@@ -56,6 +56,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
         clearChars();
 
+        var maxTextWidth = null;
         var textWidth = null;
         var forEachSegment = null;
         if (window.Intl && window.Intl.Segmenter) {
@@ -69,6 +70,7 @@ window.addEventListener('DOMContentLoaded', function() {
             };
 
             textWidth = 0;
+            maxTextWidth = 0;
             forEachSegment(function(seg) {
                 // Unicode.org specifies these properties as follows [1]:
                 //  - `Emoji`: "characters that are emoji"
@@ -87,9 +89,14 @@ window.addEventListener('DOMContentLoaded', function() {
                 // [1]: https://unicode.org/reports/tr51/#Emoji_Properties
                 if (isEmoji(seg)) {
                     textWidth += 1.65; // Roughly measured.
+                    if (textWidth > maxTextWidth) maxTextWidth = textWidth;
+                } else if (seg === '\n') {
+                    textWidth = 0;
                 } else {
                     textWidth += 1;
+                    if (textWidth > maxTextWidth) maxTextWidth = textWidth;
                 }
+
             });
         } else {
             // Backward compatibility -- no Intl.Segmenter support
@@ -99,7 +106,7 @@ window.addEventListener('DOMContentLoaded', function() {
             };
         }
 
-        var fontSize = Math.min(150 / textWidth, 30);
+        var fontSize = Math.min(150 / maxTextWidth, 30);
 
         forEachSegment(function(seg) {
             var charbox = charboxTemplate.content.cloneNode(true);
@@ -114,6 +121,9 @@ window.addEventListener('DOMContentLoaded', function() {
 
             if (isEmoji(seg)) {
                 charElem.className = 'emoji';
+            } else if (seg === '\n') {
+                charbox.className = 'flex-break';
+                charElem.className = 'flex-break';
             } else if (seg.match(/[0-9]/i)) {
                 charElem.className = 'number';
             } else if (!seg.match(/\p{L}/iu)) {
@@ -233,5 +243,5 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 
     renderText();
-    initAnalytics();
+    //initAnalytics();
 });
